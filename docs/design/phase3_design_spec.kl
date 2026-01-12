@@ -1,0 +1,96 @@
+⫻data/spec:
+# OCS Phase 3 Design Specification
+
+## 1. Workflow Diagram (Logic)
+This section defines the logical flow of the OCS phases, represented as nodes and directed edges.
+
+### Nodes
+- **N1**: Phase 1: Initialization & Goal Definition (Director, Lyra)
+- **N2**: Phase 2: Task Decomposition & Prompt Engineering (GPTASe, uTASe, puTASe, Lyra)
+- **N3**: Phase 3: Design & Implementation (Aurora, Kodax)
+- **N4**: Phase 4: Execution & Monitoring (Director, Agents)
+- **N5**: Phase 5: Meta-Communication (Director)
+- **N6**: Phase 6: KickLang Integration (System)
+
+### Edges
+- **E1**: N1 -> N2 [label="Goal Defined"]
+- **E2**: N2 -> N3 [label="TASs & Prompts Ready"]
+- **E3**: N3 -> N4 [label="System Designed & Built"]
+- **E4**: N4 -> N4 [label="Loop: Refine & Re-execute"]
+- **E5**: N4 -> N5 [label="Report Progress"]
+- **E6**: N4 -> N6 [label="Update Knowledge Graph"]
+
+## 2. UI Components
+This section defines the core user interface components required for interaction with the OCS.
+
+### 2.1 Task Assignment Interface
+**Role Access**: GPTASe, TASe, uTASe, puTASe, Director
+**Description**: A dashboard for inputting high-level goals, viewing decomposed tasks, and assigning them to agents.
+
+#### Components:
+- **Input_Goal**: Text area for "High-Level Objective".
+- **List_TAS**: Dynamic list view for extracted Task-Agnostic Steps (TASs).
+- **Control_Actions**:
+    - `[Purify]`: Triggers puTASe to refine the list.
+    - `[Assign]`: Opens a modal to select an agent for a specific TAS.
+    - `[Execute]`: Initiates the workflow for selected items.
+- **Status_Indicator**: Badges showing "Pending", "Active", "Completed", "Failed".
+
+### 2.2 Progress Tracking Dashboard
+**Role Access**: Director, User
+**Description**: A centralized view to monitor the real-time status of the orchestration.
+
+#### Components:
+- **Tree_View**: A hierarchical visualization of Phases (Roots) and Tasks (Nodes).
+- **Log_Stream**: A scrolling console showing live output from agents (e.g., "Director: Evaluating state...").
+- **KPI_Panel**:
+    - `Tasks Completed`: Integer.
+    - `Active Agents`: Integer.
+    - `System Health`: Percentage/Color (Green/Yellow/Red).
+- **Resource_Monitor**: Visualization of API token usage and latency.
+
+### 2.3 Output Validation Panel
+**Role Access**: Deliverable Integrator (Director/Kodax)
+**Description**: A tool for reviewing and validating the artifacts produced by agents before finalization.
+
+#### Components:
+- **Split_View**:
+    - Left Pane: "Requirement/Source TAS" (Read-only).
+    - Right Pane: "Generated Artifact" (Editable).
+- **Checklist**:
+    - `[ ] SMART Criteria Met`
+    - `[ ] Style Guide Compliant`
+    - `[ ] Logical Consistency`
+- **Decision_Controls**:
+    - `[Approve]`: Marks task as complete and proceeds.
+    - `[Reject]`: Opens feedback dialog to send back to agent.
+    - `[Refine]`: Triggers a "Refinement Loop" (Subtask).
+
+## 3. Aesthetics
+This section defines the visual identity of the OCS interfaces.
+
+### 3.1 Color Palette
+- **Backgrounds**:
+    - `Slate-900` (#0F172A): Global Background.
+    - `Slate-800` (#1E293B): Card/Panel Background.
+- **Text**:
+    - `Slate-50` (#F8FAFC): Primary Text.
+    - `Slate-400` (#94A3B8): Secondary/Label Text.
+- **Accents**:
+    - `Sky-400` (#38BDF8): Primary Action / Highlight.
+    - `Indigo-500` (#6366F1): Active State / Focus.
+- **Status**:
+    - `Green-500` (#22C55E): Success / Completed.
+    - `Yellow-500` (#EAB308): Warning / In-Progress.
+    - `Red-500` (#EF4444): Error / Failed.
+
+### 3.2 Typography
+- **Headings**: `Inter` (Bold, 700) - Clean, modern sans-serif for structure.
+- **Body**: `Roboto` (Regular, 400) - Readable sans-serif for content.
+- **Code/Data**: `Fira Code` (Medium, 500) - Monospaced with ligatures for KickLang snippets and logs.
+
+### 3.3 Layout Principles
+- **Grid System**: 12-column fluid grid.
+- **Spacing**: 8pt grid system (8px, 16px, 24px, 32px).
+- **Glassmorphism**: Subtle usage on overlays (background-blur: 10px, opacity: 0.8) for depth.
+- **Border Radius**: 8px (Small components), 16px (Cards/Containers).
