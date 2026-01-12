@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, ANY
 from src.core.agents.gptase import GPTASeAgent
-from src.ocs.shared.models import AgentTask
+from src.shared.models import AgentTask
 
 @pytest.fixture
 def mock_bus():
@@ -34,24 +34,27 @@ async def test_gptase_executes_task_success(mock_bus):
         "status": "COMPLETED",
         "result": ANY,
         "agent_id": "GPTASe"
-    })
+    }, source_id="GPTASe")
 
 @pytest.mark.asyncio
 async def test_gptase_executes_task_failure(mock_bus):
-    agent = GPTASeAgent(bus=mock_bus)
+    # Mock LLM that raises exception
+    mock_llm = AsyncMock()
+    mock_llm.generate.side_effect = Exception("LLM Generation Failed")
+    
+    agent = GPTASeAgent(bus=mock_bus, llm=mock_llm)
     await agent.start()
     
-    # Mock random to trigger failure (< 0.1)
-    with patch('asyncio.sleep', AsyncMock()), \
-         patch('random.random', return_value=0.05):
+    # Mock sleep to be fast
+    with patch('asyncio.sleep', AsyncMock()):
         
         task = AgentTask(id="999", type="TEST", title="Impossible Task", payload={}, assigned_to="GPTASe")
         await agent._handle_task_envelope(type('Envelope', (), {'payload': task})())
 
-    # Verify result failure (BaseAgent handles failure, publishes to workflow.task_result now)
+    # Verify result failure
     mock_bus.publish.assert_any_call("workflow.task_result", {
         "task_id": "999",
         "status": "FAILED",
-        "error": "Random execution glitch in quantum matrix.",
+        "error": "LLM Generation Failed",
         "agent_id": "GPTASe"
     }, source_id="GPTASe")

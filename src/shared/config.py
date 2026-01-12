@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ARTIFACTS_DIR: Path = BASE_DIR / "artifacts"
     
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///ocs.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{BASE_DIR}/ocs.db"
     
     # Workflow
     MAX_REFINEMENT_LOOPS: int = 3

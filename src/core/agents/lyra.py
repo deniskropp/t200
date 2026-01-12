@@ -54,11 +54,7 @@ class LyraAgent(BaseAgent):
         
         logger.info(f"Lyra received decomposition request for goal: {title} ({goal_id_str})")
         
-        await self.bus.publish("agent.log", {
-            "agent_id": self.agent_id,
-            "level": "INFO",
-            "message": f"Starting task decomposition for '{title}'..."
-        })
+        await self.log("INFO", f"Starting task decomposition for '{title}'...")
 
         # Generate Tasks using LLM
         generated_tasks_data = []
@@ -72,11 +68,7 @@ class LyraAgent(BaseAgent):
                 )
                 prompt = f"Goal: {title}\nContext: {description}\n{system_instruction}"
                 
-                await self.bus.publish("agent.log", {
-                    "agent_id": self.agent_id,
-                    "level": "INFO",
-                    "message": "Consulting Gemini..."
-                })
+                await self.log("INFO", "Consulting Gemini...")
 
                 # Call LLM
                 response = await self.llm.generate(prompt, schema=TaskDecompositionSchema)
@@ -85,11 +77,7 @@ class LyraAgent(BaseAgent):
                 elif isinstance(response, dict) and 'tasks' in response:
                     generated_tasks_data = [TaskModel(**t) for t in response['tasks']]
                 
-                await self.bus.publish("agent.log", {
-                    "agent_id": self.agent_id,
-                    "level": "SUCCESS",
-                    "message": "Gemini generated tasks."
-                })
+                await self.log("SUCCESS", "Gemini generated tasks.")
 
             except Exception as e:
                  logger.error(f"Lyra LLM generation failed: {e}")
@@ -129,11 +117,7 @@ class LyraAgent(BaseAgent):
                 
                 logger.info(f"Lyra created {len(created_tasks)} tasks for goal {goal_id_str}")
                 
-                await self.bus.publish("agent.log", {
-                    "agent_id": self.agent_id,
-                    "level": "SUCCESS",
-                    "message": f"Decomposed goal into {len(created_tasks)} tasks."
-                })
+                await self.log("SUCCESS", f"Decomposed goal into {len(created_tasks)} tasks.")
                 
                 # Publish event so others know tasks are ready
                 await self.bus.publish("workflow.tasks_generated", {
@@ -143,8 +127,4 @@ class LyraAgent(BaseAgent):
                 
         except Exception as e:
             logger.error(f"Lyra failed to save tasks: {e}", exc_info=True)
-            await self.bus.publish("agent.log", {
-                "agent_id": self.agent_id,
-                "level": "ERROR",
-                "message": f"Failed to save tasks: {str(e)}"
-            })
+            await self.log("ERROR", f"Failed to save tasks: {str(e)}")

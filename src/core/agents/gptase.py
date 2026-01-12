@@ -32,11 +32,7 @@ class GPTASeAgent(BaseAgent):
         """
         logger.info(f"GPTASe executing task: {task.title} ({task.id})")
         
-        await self.bus.publish("agent.log", {
-            "agent_id": self.agent_id,
-            "level": "INFO",
-            "message": f"Starting execution of '{task.title}'..."
-        })
+        await self.log("INFO", f"Starting execution of '{task.title}'...")
 
         output_content = ""
         summary = ""
@@ -50,11 +46,7 @@ class GPTASeAgent(BaseAgent):
                 )
                 user_prompt = f"Task: {task.title}\nDetails: {task.payload}"
                 
-                await self.bus.publish("agent.log", {
-                    "agent_id": self.agent_id,
-                    "level": "INFO",
-                    "message": "Consulting Gemini..."
-                })
+                await self.log("INFO", "Consulting Gemini...")
 
                 response = await self.llm.generate(f"{system_prompt}\n{user_prompt}", schema=TaskResultSchema)
                 
@@ -70,11 +62,7 @@ class GPTASeAgent(BaseAgent):
                          output_content = str(response)
                          summary = "Generated content."
 
-                await self.bus.publish("agent.log", {
-                    "agent_id": self.agent_id,
-                    "level": "SUCCESS",
-                    "message": "Gemini completed task."
-                })
+                await self.log("SUCCESS", "Gemini completed task.")
 
             except Exception as e:
                 logger.error(f"GPTASe LLM failed: {e}")
@@ -84,25 +72,13 @@ class GPTASeAgent(BaseAgent):
                 # If we raise, BaseAgent handles failure logging.
                 raise e 
         else:
-             # Fallback
              await asyncio.sleep(random.uniform(1.0, 2.0))
              summary = f"Executed {task.title}"
              output_content = "Mock output content."
 
         result = f"{summary} | {output_content[:50]}..."
         
-        # Publish Result Event
-        await self.bus.publish("workflow.task_result", {
-            "task_id": task.id,
-            "status": "COMPLETED",
-            "result": result,
-            "agent_id": self.agent_id
-        })
         
-        await self.bus.publish("agent.log", {
-            "agent_id": self.agent_id,
-            "level": "SUCCESS",
-            "message": f"Completed '{task.title}'."
-        })
+        await self.log("SUCCESS", f"Completed '{task.title}'.")
         
-        return {"output": result}
+        return result

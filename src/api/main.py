@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routers import workflow, agents, logs
 from src.api.deps import _bus, _engine
+from src.core.db.session import create_tables
 from src.api.routers.agents import AgentRegistryService
 from src.core.agents.director import DirectorAgent
 
@@ -11,6 +12,7 @@ async def lifespan(app: FastAPI):
     print("--- LIFESPAN STARTUP ---")
     # Startup
     registry = AgentRegistryService(_bus)
+    await create_tables()
     await registry.start_listening()
     
     # Initialize Core Agents

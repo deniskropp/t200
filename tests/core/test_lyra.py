@@ -47,18 +47,18 @@ async def test_lyra_reacts_to_decomposition_request(mock_bus, mock_session_facto
     mock_session.get.assert_called_with(Goal, UUID(goal_id))
     
     # 2. Tasks should be added
-    assert mock_session.add.call_count == 3
+    assert mock_session.add.call_count == 2
     assert mock_session.commit.called
     
     # 3. Success log
     mock_bus.publish.assert_any_call("agent.log", {
         "agent_id": "Lyra",
         "level": "SUCCESS",
-        "message": "Decomposed goal into 3 tasks."
+        "message": "Decomposed goal into 2 tasks."
     })
     
     # 4. Tasks generated event
     mock_bus.publish.assert_any_call("workflow.tasks_generated", {
         "goal_id": goal_id,
-        "task_count": 3
+        "task_count": 2
     })

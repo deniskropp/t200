@@ -67,6 +67,14 @@ class BaseAgent(ABC):
         )
         await self.bus.publish("system.heartbeat", hb)
 
+    async def log(self, level: str, message: str):
+        """Helper to publish log events."""
+        await self.bus.publish("agent.log", {
+            "agent_id": self.agent_id,
+            "level": level,
+            "message": message
+        })
+
     async def _handle_task_envelope(self, envelope: MessageEnvelope):
         """Callback for incoming tasks."""
         try:
@@ -97,12 +105,17 @@ class BaseAgent(ABC):
 
         try:
             result = await self.process_task(task)
-            # Default result publishing is deprecated in favor of specific agent implementation
-            # or should be synchronized. For now, we trust the agent subclass to publish 
-            # specific workflow events if needed, OR we standardize here.
-            # Plan says: GPTASe publishes workflow.task_result.
-            # Let's keep this generic one or remove it?
-            # Removing to avoid confusion/noise.
+            # Standardize result publishing
+            # If process_task returns a dict, assume it's the result.
+            # Only publish if result is not None (allows agents to opt-out or handle it themselves if they return None)
+            if result is not None:
+                payload = {
+                    "task_id": task.id,
+                    "status": "COMPLETED",
+                    "result": result, # Can be dict or string
+                    "agent_id": self.agent_id
+                }
+                await self.bus.publish("workflow.task_result", payload, source_id=self.agent_id)
             
         except Exception as e:
             logger.error(f"Task {task.id} failed: {e}", exc_info=True)

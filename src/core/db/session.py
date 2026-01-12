@@ -22,6 +22,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def create_tables() -> None:
     """Helper to create tables for dev/testing."""
-    from src.core.db.models import Base
+    from src.core.db.models import Base, Goal, Task
+    print(f"Creating tables: {list(Base.metadata.tables.keys())}")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

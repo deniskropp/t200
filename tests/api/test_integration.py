@@ -1,29 +1,32 @@
-from fastapi.testclient import TestClient
-from src.api.main import app
-from src.core.workflow.state import WorkflowState
-
-client = TestClient(app)
-
-def test_health_check():
-    response = client.get("/health")
+import pytest
+from httpx import AsyncClient, ASGITransport
+from src.api.main import app, lifespan
+from src.core.workflow.state import WorkflowState  
+    
+@pytest.mark.asyncio
+async def test_health_check():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
-def test_create_and_query_goal():
-    # 1. Create Goal
-    response = client.post("/api/v1/workflow/goals", json={
-        "title": "API Test Goal",
-        "description": "Testing via TestClient"
-    })
-    assert response.status_code == 201
-    goal_id = response.json()["id"]
-    assert goal_id is not None
-    
-    # 2. Transition (Should fail guard if descriptions are checked, but guard only checks existence)
-    # The guard checks if goal.title and goal.description exist, which they do.
-    response = client.post(f"/api/v1/workflow/goals/{goal_id}/advance", json={
-        "target_state": WorkflowState.TASK_DECOMPOSITION.value
-    })
-    
-    assert response.status_code == 200
-    assert response.json()["new_state"] == WorkflowState.TASK_DECOMPOSITION.value
+@pytest.mark.asyncio
+async def test_create_and_query_goal():
+    async with lifespan(app): # Ensure lifespan runs (tables created via conftest or lifespan)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            # 1. Create Goal
+            response = await ac.post("/api/v1/workflow/goals", json={
+                "title": "API Test Goal",
+                "description": "Testing via TestClient"
+            })
+            assert response.status_code == 201
+            goal_id = response.json()["id"]
+            assert goal_id is not None
+            
+            # 2. Transition
+            response = await ac.post(f"/api/v1/workflow/goals/{goal_id}/advance", json={
+                "target_state": WorkflowState.TASK_DECOMPOSITION.value
+            })
+            
+            assert response.status_code == 200
+            assert response.json()["new_state"] == WorkflowState.TASK_DECOMPOSITION.value

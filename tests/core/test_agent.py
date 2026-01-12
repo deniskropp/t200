@@ -3,7 +3,7 @@ import asyncio
 from typing import Any
 from src.core.agents.base import BaseAgent
 from src.core.bus.bus import InMemoryMessageBus, MessageEnvelope
-from src.ocs.shared.models import AgentTask, AgentStatus
+from src.shared.models import AgentTask, AgentStatus
 
 class MockAgent(BaseAgent):
     def __init__(self, agent_id, bus):
@@ -12,6 +12,7 @@ class MockAgent(BaseAgent):
 
     async def process_task(self, task: AgentTask) -> Any:
         self.processed.append(task)
+        await self.bus.publish(f"tasks.{task.id}.result", {"status": "success", "result": "processed"})
         return "processed"
 
 @pytest.mark.asyncio

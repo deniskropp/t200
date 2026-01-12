@@ -31,4 +31,4 @@ build/
 htmlcov/
 
 .cursor
-ocs.db
+ocs.db*

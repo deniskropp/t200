@@ -19,11 +19,7 @@ class DirectorAgent(BaseAgent):
         super().__init__(agent_id="Director", bus=bus)
         self.engine = engine
 
-    async def start(self):
-        await super().start()
-        # Subscribe to workflow events
-        await self.bus.subscribe("workflow.goal_started", self.on_goal_started)
-        await self.bus.subscribe("workflow.state_change", self.on_state_change)
+
 
     async def process_task(self, task: AgentTask) -> Any:
         # Director might process explicit tasks too
@@ -41,11 +37,7 @@ class DirectorAgent(BaseAgent):
         title = data.get("title")
         
         logger.info(f"Director observed new goal: {title} ({goal_id}). Initiating assessment.")
-        await self.bus.publish("agent.log", {
-            "agent_id": "Director", 
-            "level": "INFO", 
-            "message": f"Observed new goal: '{title}'. Assessing feasibility..."
-        })
+        await self.log("INFO", f"Observed new goal: '{title}'. Assessing feasibility...")
         
         # Simulate thinking/processing time (e.g., calling LLM for feasibility)
         await asyncio.sleep(2) 
@@ -53,11 +45,7 @@ class DirectorAgent(BaseAgent):
         # Attempt to transition to Phase 2
         try:
             logger.info(f"Director approving transition to Task Decomposition for {goal_id}")
-            await self.bus.publish("agent.log", {
-                "agent_id": "Director", 
-                "level": "INFO", 
-                "message": f"Goal '{title}' approved. Transitioning to Task Decomposition."
-            })
+            await self.log("INFO", f"Goal '{title}' approved. Transitioning to Task Decomposition.")
             # Note: goal_id in payload is str, transition_phase expects UUID or str? 
             # engine.transition_phase expects UUID according to type hint, but usually asyncpg/sqlalchemy handle strings if mapped to UUID.
             # However, looking at engine.py: async def transition_phase(self, goal_id: UUID, ...)
@@ -80,11 +68,7 @@ class DirectorAgent(BaseAgent):
         
         if new_state == WorkflowState.TASK_DECOMPOSITION.value:
             logger.info("Director is now searching for Lyra to delegate Prompt Engineering...")
-            await self.bus.publish("agent.log", {
-                "agent_id": "Director", 
-                "level": "INFO", 
-                "message": f"Phase Task Decomposition active. Delegating to Lyra..."
-            })
+            await self.log("INFO", f"Phase Task Decomposition active. Delegating to Lyra...")
             
             # Fetch Goal details to pass to Lyra
             from src.core.db.models import Goal
@@ -116,11 +100,7 @@ class DirectorAgent(BaseAgent):
         
         logger.info(f"Director observed {count} new tasks for goal {goal_id}. Assigning to GPTASe.")
         
-        await self.bus.publish("agent.log", {
-            "agent_id": "Director", 
-            "level": "INFO", 
-            "message": f"Found {count} pending tasks. Assigning to Agents..."
-        })
+        await self.log("INFO", f"Found {count} pending tasks. Assigning to Agents...")
         
         from src.core.db.models import Task
         from sqlalchemy import select, update
@@ -147,16 +127,13 @@ class DirectorAgent(BaseAgent):
                         "id": str(task.id),
                         "type": task.type,
                         "title": task.title,
-                        "payload": task.payload
+                        "payload": task.payload,
+                        "assigned_to": "GPTASe"
                     }
                     
                     await self.bus.publish(f"agents.GPTASe.task", agent_task_payload)
                     
-                    await self.bus.publish("agent.log", {
-                        "agent_id": "Director",
-                        "level": "INFO",
-                        "message": f"Assigned task '{task.title}' to GPTASe."
-                    })
+                    await self.log("INFO", f"Assigned task '{task.title}' to GPTASe.")
                 
                 await session.commit()
                 
@@ -188,11 +165,7 @@ class DirectorAgent(BaseAgent):
                     await session.commit()
                     
                     logger.info(f"Task {task.title} marked as {status} in DB.")
-                    await self.bus.publish("agent.log", {
-                        "agent_id": "Director",
-                        "level": "INFO",
-                        "message": f"Updated Task '{task.title}' status to {status}."
-                    })
+                    await self.log("INFO", f"Updated Task '{task.title}' status to {status}.")
         except Exception as e:
             logger.error(f"Director failed to process task result: {e}", exc_info=True)
 
