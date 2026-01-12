@@ -5,7 +5,7 @@ from typing import Any
 from src.core.agents.base import BaseAgent
 from src.core.workflow.engine import WorkflowEngine
 from src.core.workflow.state import WorkflowState
-from src.ocs.shared.models import AgentTask
+from src.shared.models import AgentTask
 from src.core.bus.bus import MessageEnvelope, MessageBus
 
 logger = logging.getLogger(__name__)

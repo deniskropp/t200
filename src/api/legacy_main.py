@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from ocs.shared.constants import SYSTEM_NAME, SYSTEM_VERSION, SYSTEM_MODE
-from ocs.shared.models import Task, TaskState
+from src.shared.constants import SYSTEM_NAME, SYSTEM_VERSION, SYSTEM_MODE
+from src.shared.models import Task, TaskState
 
 app = FastAPI(title=SYSTEM_NAME, version=SYSTEM_VERSION)
 

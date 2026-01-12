@@ -3,8 +3,8 @@ import asyncio
 from typing import Optional
 from rich.console import Console
 from rich.table import Table
-from ocs.shared.constants import SYSTEM_NAME, SYSTEM_VERSION, SYSTEM_MODE
-from ocs.shared.models import AgentRole
+from src.shared.constants import SYSTEM_NAME, SYSTEM_VERSION, SYSTEM_MODE
+from src.shared.models import AgentRole
 
 app = typer.Typer(help=SYSTEM_NAME)
 console = Console()

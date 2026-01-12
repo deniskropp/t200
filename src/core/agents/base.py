@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any, Coroutine
 from uuid import UUID
 
 from src.core.bus.bus import MessageBus, MessageEnvelope
-from src.ocs.shared.models import AgentTask, AgentHeartbeat, AgentStatus
+from src.shared.models import AgentTask, AgentHeartbeat, AgentStatus
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import random
 from typing import Any
 from src.core.agents.base import BaseAgent
 from src.core.bus.bus import MessageEnvelope, MessageBus
-from src.ocs.shared.models import AgentTask
+from src.shared.models import AgentTask
 
 logger = logging.getLogger(__name__)
 

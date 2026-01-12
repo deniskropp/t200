@@ -2,7 +2,7 @@ from typing import Annotated, List, Dict
 from fastapi import APIRouter, Depends
 from src.core.bus.bus import MessageBus
 from src.api.deps import get_bus
-from src.ocs.shared.models import AgentHeartbeat
+from src.shared.models import AgentHeartbeat
 
 router = APIRouter()
 
