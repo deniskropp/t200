@@ -31,3 +31,4 @@ build/
 htmlcov/
 
 .cursor
+ocs.db

@@ -1,6 +1,7 @@
 from enum import Enum, auto
-from typing import List, Optional, Any
-from datetime import datetime
+from typing import List, Optional, Any, Dict
+from datetime import datetime, timezone
+from uuid import uuid4
 from pydantic import BaseModel, Field, ConfigDict
 
 class AgentRole(str, Enum):
@@ -21,6 +22,19 @@ class TaskState(str, Enum):
     ACTIVE = "Active"
     COMPLETED = "Completed"
     FAILED = "Failed"
+
+class AgentStatus(str, Enum):
+    IDLE = "Idle"
+    WORKING = "Working"
+    ERROR = "Error"
+    STALLED = "Stalled"
+
+class TaskPriority(str, Enum):
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
+
 
 class KickLangSerializable(BaseModel):
     """Mixin to provide KickLang serialization capability."""
@@ -51,6 +65,30 @@ class Communication(KickLangSerializable):
     actor: AgentRole
     recipient: AgentRole
     content: str
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     phase_ref: Optional[str] = None
     message_type: str = "Directive"  # e.g., Directive, Report, Query
+
+class TaskConstraints(BaseModel):
+    timeout_seconds: float = 300.0
+    max_retries: int = 3
+    required_capabilities: List[str] = Field(default_factory=list)
+
+class AgentTask(KickLangSerializable):
+    """Payload sent to an agent to perform a specific action."""
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    type: str # e.g. "generation", "review"
+    title: str = "" 
+    payload: Dict[str, Any]
+    context_refs: List[str] = Field(default_factory=list)
+    constraints: TaskConstraints = Field(default_factory=TaskConstraints)
+    assigned_to: str # AgentID
+    priority: TaskPriority = TaskPriority.MEDIUM
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AgentHeartbeat(BaseModel):
+    agent_id: str
+    status: AgentStatus
+    current_task_id: Optional[str] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
