@@ -1,0 +1,33 @@
+---
+id: T-20260113-001
+title: Consolidate Project Structure and Finalize Phase 3 Plan
+created: 2026-01-13T00:33:40+01:00
+author: Antigravity
+recipient: ContextAwareArchitect
+status: READY
+---
+
+# Context
+The project T200 (OCS) is in a transitional state. A redundant directory structure (`src/ocs`) exists alongside the target structure (`src/`). The user has requested a clean-up. Additionally, Phase 3 implementation planning is underway, with key architectural decisions pending in `docs/implementation_planning.md`.
+
+# Objectives
+1. **Refactor Directory Structure**:
+   - Dissolve `src/ocs`.
+   - Move `src/ocs/shared` -> `src/shared`.
+   - Move `src/ocs/cli` -> `src/cli`.
+   - Merge `src/ocs/api` content into `src/api` (or replace if `src/api` is the intended target).
+   - Update all Python imports to remove `src.ocs` references.
+
+2. **Finalize Implementation Plan**:
+   - Review `docs/implementation_planning.md`.
+   - Provide defaults or solicit user answers for the 5 implementation categories (Structure, Agent Arch, Workflow, API, UI).
+   - Update the plan with decisions.
+
+# Constraints
+- Maintain git history where possible (`git mv`).
+- Ensure no circular dependencies are introduced by the merge.
+- "KickLang" is the requested format for this task file.
+
+# Resources
+- `docs/implementation_planning.md`: Contains the detailed questions and current state of planning.
+- `README.md`: Recently truncated to just title; suggests a fresh start context.
