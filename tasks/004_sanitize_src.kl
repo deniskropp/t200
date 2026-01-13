@@ -1,0 +1,41 @@
+---
+id: T-20260113-004
+title: Sanitize src folder
+created: 2026-01-13T02:32:00+01:00
+author: Antigravity
+recipient: CodebaseRefactorer
+status: READY
+---
+
+# Context
+The `src/` directory needs to be sanitized to strictly follow the modern Python monorepo layout (`src/api`, `src/cli`, `src/shared`, `src/core`). Current analysis reveals several issues:
+1. **Misplaced UI**: `src/ui` is a standalone Vite/TypeScript project. This should not be inside `src/`.
+2. **API Inconsistencies**: `src/api` contains both `/routers` and `/routes` directories, which is redundant.
+3. **Legacy Files**: `src/api/legacy_main.py` exists and likely needs to be removed/merged.
+4. **General Structure**: Ensure all modules follow the "Shared Services and Models" pattern.
+
+# Objectives
+1. **Relocate UI**: Move `src/ui` to the project root (e.g., `/frontend` or `/ui`).
+2. **Consolidate API**:
+   - Merge `src/api/routers` and `src/api/routes` into a single consistent structure (standardize on `routers`).
+   - Remove `src/api/legacy_main.py` after ensuring any relevant logic is in `src/api/main.py`.
+3. **Modernize Python Code**:
+   - Ensure all files in `src/` use async FastAPI, httpx, and Pydantic v2.
+   - Enforce full type annotations (check against `mypy --strict`).
+   - Remove any legacy imports (`requests`, `flask`, `argparse`).
+4. **Expose Interfaces**: Update `__init__.py` files to expose public interfaces.
+
+# Constraints
+- Use `git mv` for moving files to preserve history.
+- Maintain existing functionality (verify with tests).
+- Follow SOTA Python patterns (async/await, DI, Pydantic v2).
+
+# Resources
+- [pyproject.toml](file:///home/einrichten/t200/pyproject.toml): Defines the current dependency stack.
+- `src/api/main.py` vs `src/api/legacy_main.py`: Comparison for consolidation.
+- `src/ui`: The frontend project to be moved.
+
+# Verification
+- All tests in `tests/` pass.
+- `ruff` and `mypy` report no errors.
+- No references to legacy libraries remain in the codebase.
