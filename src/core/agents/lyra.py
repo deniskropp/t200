@@ -1,24 +1,24 @@
-
 import logging
-import asyncio
-import json
+from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
-from typing import Any
 
 from src.core.agents.base import BaseAgent
-from src.core.bus.bus import MessageBus, MessageEnvelope
 from src.core.db.session import AsyncSessionLocal
 from src.core.db.models import Task, Goal
+from src.shared.models import AgentRole, TaskState
+
+if TYPE_CHECKING:
+    from src.core.bus.bus import MessageBus, MessageEnvelope
+    from src.core.llm.service import LLMService
+    from src.shared.models import AgentTask
+
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-from typing import Optional, List
-from pydantic import BaseModel
-from src.core.llm.service import LLMService
-
 class TaskModel(BaseModel):
     title: str
-    type: str # RESEARCH, DESIGN, CODING
+    type: str  # RESEARCH, DESIGN, CODING
     description: str
 
 class TaskDecompositionSchema(BaseModel):
@@ -29,20 +29,25 @@ class LyraAgent(BaseAgent):
     Lyra: The Prompt Engineer & Task Decomposer.
     Responsible for breaking down High-Level Goals into executable Tasks.
     """
-    def __init__(self, bus: MessageBus, llm: LLMService = None, session_factory=AsyncSessionLocal):
-        super().__init__(agent_id="Lyra", bus=bus)
+    def __init__(
+        self, 
+        bus: "MessageBus", 
+        llm: Optional["LLMService"] = None, 
+        session_factory: Any = AsyncSessionLocal
+    ) -> None:
+        super().__init__(agent_id=AgentRole.LYRA.value, bus=bus)
         self.session_factory = session_factory
         self.llm = llm
 
-    async def start(self):
+    async def start(self) -> None:
         await super().start()
         # Listen for specific delegation commands
         await self.bus.subscribe("agent.lyra.decompose", self.on_decompose_request)
 
-    async def process_task(self, task: Any) -> Any:
+    async def process_task(self, task: "AgentTask") -> Any:
         return {"status": "ok"}
 
-    async def on_decompose_request(self, envelope: MessageEnvelope):
+    async def on_decompose_request(self, envelope: "MessageEnvelope") -> None:
         """
         Handles request to decompose a goal.
         Payload: { "goal_id": str, "title": str, "description": str }
@@ -52,12 +57,15 @@ class LyraAgent(BaseAgent):
         title = payload.get("title")
         description = payload.get("description", "")
         
-        logger.info(f"Lyra received decomposition request for goal: {title} ({goal_id_str})")
-        
+        if not goal_id_str or not title:
+            logger.warning("Incomplete decomposition request received: %s", payload)
+            return
+
+        logger.info("Lyra received decomposition request for goal: %s (%s)", title, goal_id_str)
         await self.log("INFO", f"Starting task decomposition for '{title}'...")
 
         # Generate Tasks using LLM
-        generated_tasks_data = []
+        generated_tasks_data: List[TaskModel] = []
         if self.llm:
             try:
                 system_instruction = (
@@ -80,10 +88,14 @@ class LyraAgent(BaseAgent):
                 await self.log("SUCCESS", "Gemini generated tasks.")
 
             except Exception as e:
-                 logger.error(f"Lyra LLM generation failed: {e}")
+                 logger.error("Lyra LLM generation failed: %s", e)
                  # Fallback
                  generated_tasks_data = [
-                      TaskModel(title="Research (Fallback)", type="RESEARCH", description="Investigation needed due to LLM error.")
+                      TaskModel(
+                          title="Research (Fallback)", 
+                          type="RESEARCH", 
+                          description="Investigation needed due to LLM error."
+                      )
                  ]
         else:
              # Fallback if no LLM service
@@ -98,7 +110,7 @@ class LyraAgent(BaseAgent):
                 # verify goal exists
                 goal = await session.get(Goal, UUID(goal_id_str))
                 if not goal:
-                    logger.error(f"Goal {goal_id_str} not found during decomposition.")
+                    logger.error("Goal %s not found during decomposition.", goal_id_str)
                     return
 
                 created_tasks = []
@@ -108,6 +120,7 @@ class LyraAgent(BaseAgent):
                         title=t_model.title,
                         type=t_model.type,
                         payload={"description": t_model.description},
+                        status=TaskState.PENDING.value,
                         assigned_to=None # Pending assignment
                     )
                     session.add(new_task)
@@ -115,8 +128,7 @@ class LyraAgent(BaseAgent):
                 
                 await session.commit()
                 
-                logger.info(f"Lyra created {len(created_tasks)} tasks for goal {goal_id_str}")
-                
+                logger.info("Lyra created %s tasks for goal %s", len(created_tasks), goal_id_str)
                 await self.log("SUCCESS", f"Decomposed goal into {len(created_tasks)} tasks.")
                 
                 # Publish event so others know tasks are ready
@@ -126,5 +138,5 @@ class LyraAgent(BaseAgent):
                 })
                 
         except Exception as e:
-            logger.error(f"Lyra failed to save tasks: {e}", exc_info=True)
+            logger.error("Lyra failed to save tasks: %s", e, exc_info=True)
             await self.log("ERROR", f"Failed to save tasks: {str(e)}")

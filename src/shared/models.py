@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 from typing import List, Optional, Any, Dict
 from datetime import datetime, timezone
 from uuid import uuid4

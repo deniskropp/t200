@@ -7,6 +7,7 @@ from src.core.db.session import AsyncSessionLocal
 from src.core.db.models import Task
 from uuid import UUID
 from sqlalchemy import select
+from src.shared.models import TaskState
 
 @pytest.mark.asyncio
 async def test_execution_flow():
@@ -14,7 +15,7 @@ async def test_execution_flow():
     
     # Mock LLM to None to force fallback logic (deterministic)
     from unittest.mock import patch
-    with patch("src.api.deps._llm", None):
+    with patch("src.api.main._llm", None):
         async with lifespan(app):
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
                 
@@ -37,8 +38,12 @@ async def test_execution_flow():
                 
                 assert len(tasks) >= 1
                 
-                # We expect COMPLETED now that Director handles the result loop
-                completed_count = sum(1 for t in tasks if t.status == "COMPLETED")
+                # We expect Completed now that Director handles the result loop
+                print(f"Total Tasks Found: {len(tasks)}")
+                for t in tasks:
+                    print(f"Task: {t.title}, Status: {t.status}, Assigned: {t.assigned_to}")
+                
+                completed_count = sum(1 for t in tasks if t.status == TaskState.COMPLETED.value)
                 print(f"Completed Tasks: {completed_count}")
                 assert completed_count == len(tasks)
                 

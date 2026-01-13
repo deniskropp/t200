@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ class TransitionRequest(BaseModel):
 async def create_goal(
     request: CreateGoalRequest,
     engine: Annotated[WorkflowEngine, Depends(get_engine)]
-):
+) -> dict[str, str]:
     """Create a new High-Level Goal (Starts N1)."""
     goal_id = await engine.initialize_goal(request.title, request.description)
     return {"id": str(goal_id), "status": "created"}
@@ -30,7 +30,7 @@ async def advance_phase(
     goal_id: UUID,
     request: TransitionRequest,
     engine: Annotated[WorkflowEngine, Depends(get_engine)]
-):
+) -> dict[str, Any]:
     """Advance a goal to the next phase."""
     try:
         success = await engine.transition_phase(goal_id, request.target_state)
@@ -44,7 +44,7 @@ async def advance_phase(
 async def get_goal_tasks(
     goal_id: UUID,
     engine: Annotated[WorkflowEngine, Depends(get_engine)]
-):
+) -> Any:
     """Retrieve tasks for a specific goal."""
     from sqlalchemy import select
     from src.core.db.models import Task

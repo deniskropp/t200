@@ -1,33 +1,29 @@
-
 import asyncio
 import logging
+from typing import AsyncGenerator, Any
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 from src.api.deps import get_bus
-from src.core.bus.bus import MessageBus
+from src.core.bus.bus import MessageBus, MessageEnvelope
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/stream") # accessible at /api/v1/stream/sse due to router inclusion
-async def sse_stream(request: Request):
+@router.get("/stream")
+async def sse_stream(request: Request) -> EventSourceResponse:
     """
     Server-Sent Events endpoint.
     Streams all bus messages to the client.
     """
     bus: MessageBus = get_bus()
     
-    async def event_generator():
-        queue = asyncio.Queue()
+    async def event_generator() -> AsyncGenerator[dict[str, Any], None]:
+        queue: asyncio.Queue[MessageEnvelope] = asyncio.Queue()
         
-        async def handler(envelope):
+        async def handler(envelope: MessageEnvelope) -> None:
             await queue.put(envelope)
             
         # Subscribe to everything
-        # Note: Bus implementation must support wildcard or we subscribe to specific topics
-        # Our InMemoryBus regex matching for "*" might work if implemented, 
-        # checking bus.py: if re.match(sub_pattern, topic): ...
-        # If we use ".*" it should work for regex.
         await bus.subscribe(".*", handler)
         
         try:

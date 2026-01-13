@@ -1,16 +1,23 @@
-from typing import Optional, Dict, Any
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
+from datetime import datetime, timezone
 
-from src.core.workflow.state import WorkflowState, validate_transition, TransitionError
+from src.core.workflow.state import WorkflowState, validate_transition
 from src.core.db.session import AsyncSessionLocal
-from src.core.db.models import Goal, Task
-from src.core.bus.bus import MessageBus
+from src.core.db.models import Goal
+
+if TYPE_CHECKING:
+    from src.core.bus.bus import MessageBus
 
 from src.core.workflow.guards import check_guards
 
 class WorkflowEngine:
-    def __init__(self, bus: MessageBus, session_factory=AsyncSessionLocal):
-        self.bus = bus
+    def __init__(
+        self, 
+        bus: "MessageBus", 
+        session_factory: Any = AsyncSessionLocal
+    ) -> None:
+        self.bus: "MessageBus" = bus
         self.session_factory = session_factory
 
     async def initialize_goal(self, title: str, description: str) -> UUID:
@@ -25,8 +32,11 @@ class WorkflowEngine:
             await session.commit()
             await session.refresh(goal)
             
-            # Use raw ID string for bus if needed, but UUID is fine if serializer handles it
-            await self.bus.publish("workflow.goal_started", {"goal_id": str(goal.id), "title": title})
+            await self.bus.publish("workflow.goal_started", {
+                "goal_id": str(goal.id), 
+                "title": title,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
             
             return goal.id
 
@@ -54,11 +64,16 @@ class WorkflowEngine:
             
             return True
 
-    async def _on_enter_state(self, goal: Goal, state: WorkflowState, previous_state: WorkflowState):
+    async def _on_enter_state(
+        self, 
+        goal: Goal, 
+        state: WorkflowState, 
+        previous_state: WorkflowState
+    ) -> None:
         """Hook for side effects when entering a state."""
         await self.bus.publish("workflow.state_change", {
             "goal_id": str(goal.id),
             "previous_state": previous_state.value,
             "new_state": state.value,
-            "timestamp": "iso-timestamp-placeholder" # In real app, use datetime
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })

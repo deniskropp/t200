@@ -24,7 +24,11 @@ class MessageBus(ABC):
         pass
 
     @abstractmethod
-    async def subscribe(self, topic: str, callback: Callable[[MessageEnvelope], Awaitable[None]]) -> None:
+    async def subscribe(
+        self, 
+        topic: str, 
+        callback: Callable[[MessageEnvelope], Awaitable[None]]
+    ) -> None:
         """Subscribe to a topic with an async callback."""
         pass
 
@@ -33,35 +37,49 @@ class InMemoryMessageBus(MessageBus):
     Simple in-memory implementation using asyncio. 
     Notes:
     - This is NOT durable. Messages are lost if process restarts.
-    - Callbacks are executed concurrently but awaiting completion in publish is optional 
-      depending on desired behavior. For now, we'll fire-and-forget (background task) 
-      or gather? 
-      Strictly for an Event Bus, fire-and-forget is common, but for correct ordering 
-      we might want to be careful.
-      
-      Let's implement a simple direct-dispatch first (synchronous dispatch in async context)
-      so the publisher knows it was delivered to the loop, but maybe not fully processed.
+    - Callbacks are executed concurrently in the background.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: Dict[str, List[Callable[[MessageEnvelope], Awaitable[None]]]] = {}
 
     async def publish(self, topic: str, payload: Any, source_id: str = "system") -> None:
+        """
+        Publishes a message. Dispatches to all subscribers of the exact topic.
+        Dispatch is non-blocking (fire-and-forget via asyncio.create_task).
+        """
         envelope = MessageEnvelope(
             topic=topic,
             payload=payload,
             source_id=source_id
         )
         
-        # Exact match for now (no wildcards yet)
+        # Exact match for now
         if topic in self._subscribers:
             callbacks = self._subscribers[topic]
-            # Fire and forget: Do not await completion here.
-            # This mimics real async bus behavior (eventual consistency).
-            if callbacks:
-                for cb in callbacks:
-                    asyncio.create_task(cb(envelope))
+            for cb in callbacks:
+                # Fire and forget callback execution
+                asyncio.create_task(self._safe_dispatch(cb, envelope))
 
-    async def subscribe(self, topic: str, callback: Callable[[MessageEnvelope], Awaitable[None]]) -> None:
+    async def _safe_dispatch(
+        self, 
+        callback: Callable[[MessageEnvelope], Awaitable[None]], 
+        envelope: MessageEnvelope
+    ) -> None:
+        """Internal helper to execute callback and catch errors."""
+        try:
+            await callback(envelope)
+        except Exception as e:
+            # We use print here as logging might be circular or not configured in all contexts,
+            # but usually we should use logger.
+            import logging
+            logging.getLogger(__name__).error("Error in bus callback for topic %s: %s", envelope.topic, e)
+
+    async def subscribe(
+        self, 
+        topic: str, 
+        callback: Callable[[MessageEnvelope], Awaitable[None]]
+    ) -> None:
+        """Adds a subscriber for a specific topic."""
         if topic not in self._subscribers:
             self._subscribers[topic] = []
         self._subscribers[topic].append(callback)

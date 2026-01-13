@@ -1,9 +1,10 @@
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Set
 
 from pydantic import BaseModel
 
 class WorkflowState(str, Enum):
+    """Enumeration of the possible states in the OCS workflow."""
     INITIALIZATION = "N1_INITIALIZATION"
     TASK_DECOMPOSITION = "N2_TASK_DECOMPOSITION"
     DESIGN_IMPLEMENTATION = "N3_DESIGN_IMPLEMENTATION"
@@ -20,6 +21,7 @@ class TransitionError(Exception):
     pass
 
 class WorkflowTransition(BaseModel):
+    """Represents a valid transition between two workflow states."""
     from_state: WorkflowState
     to_state: WorkflowState
     required_conditions: List[str] = []
@@ -41,6 +43,7 @@ TRANSITION_MAP: Dict[WorkflowState, Set[WorkflowState]] = {
 }
 
 def validate_transition(current: WorkflowState, target: WorkflowState) -> bool:
+    """Validates if a transition from the current state to the target state is allowed."""
     if target not in TRANSITION_MAP.get(current, set()):
         raise TransitionError(f"Invalid transition: {current} -> {target}")
     return True

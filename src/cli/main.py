@@ -1,6 +1,4 @@
 import typer
-import asyncio
-from typing import Optional
 from rich.console import Console
 from rich.table import Table
 from src.shared.constants import SYSTEM_NAME, SYSTEM_VERSION, SYSTEM_MODE
@@ -10,21 +8,39 @@ app = typer.Typer(help=SYSTEM_NAME)
 console = Console()
 
 @app.command()
-def info():
+def info() -> None:
     """Display system information."""
     console.print(f"[bold blue]{SYSTEM_NAME}[/bold blue]")
     console.print(f"Version: [green]{SYSTEM_VERSION}[/green]")
     console.print(f"Mode: [yellow]{SYSTEM_MODE}[/yellow]")
 
 @app.command()
-def init():
+def init() -> None:
     """Initialize the OCS environment."""
     console.print("[bold green]Initializing Orion Collective System...[/bold green]")
     # TODO: Add initialization logic here (e.g. database setup)
     console.print("✓ Environment ready.")
 
 @app.command()
-def list_agents():
+def goals() -> None:
+    """List all high-level goals."""
+    # ... logic ...
+    pass
+
+@app.command()
+def agents() -> None:
+    """List all registered agents."""
+    # ... logic ...
+    pass
+
+@app.command()
+def logs(follow: bool = False) -> None:
+    """Stream system logs."""
+    # ... logic ...
+    pass
+
+@app.command()
+def list_agents() -> None:
     """List available agent roles."""
     table = Table(title="Available Agents")
     table.add_column("Role", style="cyan")
@@ -36,7 +52,7 @@ def list_agents():
     console.print(table)
 
 @app.command()
-def run_agent(role: AgentRole):
+def run_agent(role: AgentRole) -> None:
     """Start an agent loop (placeholder)."""
     console.print(f"[bold]Starting agent:[/bold] {role.value}")
     # Placeholder for running the async agent loop

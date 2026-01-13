@@ -1,8 +1,13 @@
 from .models import AgentRole
 
 SYSTEM_NAME = "Orion Collective System (OCS)"
-SYSTEM_VERSION = "1.0"
-SYSTEM_MODE = "Adaptive-Orchestration"
+SYSTEM_VERSION = "0.1.0"
+SYSTEM_MODE = "Development"
+
+# Bus Topics
+WORKFLOW_TOPIC = "workflow.task_result"
+AGENT_LOG_TOPIC = "agent.log"
+AGENT_STATUS_TOPIC = "system.heartbeat"
 
 DEFAULT_PRINCIPLES = [
     "HierarchicalPlanning",
