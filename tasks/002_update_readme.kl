@@ -1,0 +1,26 @@
+---
+id: T-20260113-002
+title: Update Project README
+created: 2026-01-13T01:18:00+01:00
+author: Antigravity
+recipient: DocumentationAgent
+status: READY
+---
+
+# Context
+The current `README.md` only contains the title "# T200".
+The project "Orion Collective Orchestration System" (OCS) has a defined structure in `src/` (api, cli, core, shared, ui) and dependencies in `pyproject.toml` (FastAPI, React/Vite implied by UI, etc.).
+It is time to document the project's purpose and usage for developers.
+
+# Objectives
+1. **Update README.md**:
+   - **Header**: Project Title (OCS) and Description.
+   - **Features**: Highlight the modular architecture (API, CLI, Core, UI).
+   - **Tech Stack**: Mention Python 3.12+, FastAPI, Pydantic v2, Rich, SQLAlchemy (Async).
+   - **Installation**: Instructions for setting up the environment (likely `pip install -e .[dev]`).
+   - **Usage**: Basic commands (e.g., how to run the CLI or API).
+
+# Constraints
+- Use standard Markdown.
+- Ensure information aligns with the actual code in `src/`.
+- Reference `pyproject.toml` for dependencies and scripts.
