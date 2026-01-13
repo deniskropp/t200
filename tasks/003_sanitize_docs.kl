@@ -1,0 +1,28 @@
+---
+id: T-20260113-003
+title: Sanitize and Standardize Documentation
+created: 2026-01-13T01:55:00+01:00
+author: Antigravity
+recipient: DocumentationAgent
+status: READY
+---
+
+# Context
+The `docs/` directory contains a mix of format types (`.md`, `.kl`) and potentially overlapping content in `design/` and `implementation/`.
+- `docs/design/`: `ocs_conceptual.kl`, `phase3_design_spec.kl` (newer), `implementation_directions.md`, `phase3_detailed_design.md` (older?).
+- `docs/implementation/`: `implementation_decisions.md`, `implementation_questions.md`.
+
+# Objectives
+1. **Audit and Archive**:
+   - Identify obsolete Markdown files that have been superseded by `.kl` specs.
+   - Move obsolete files to a `docs/archive/` folder or delete them if safe.
+2. **Standardize Format**:
+   - Convert active "living" documentation to KickLang (`.kl`) if they define specs or tasks.
+   - Keep `.md` for general narrative documentation if appropriate, but ensure headers/metadata are consistent.
+3. **Organize**:
+   - Ensure a clear directory structure.
+   - checking if `blueprint/` and `research/` are populated or empty placeholders.
+
+# Constraints
+- Do not lose information; if in doubt, archive rather than delete.
+- Update `README.md` (if needed) to point to the correct "Source of Truth" documents.
