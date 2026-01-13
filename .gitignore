@@ -32,3 +32,5 @@ htmlcov/
 
 .cursor
 ocs.db*
+
+files/
